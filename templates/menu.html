@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Menu - My Flask App{% endblock %}
+
+{% block extra_css %}
+<style>
+    .menu-container {
+        background-image: url("{{ url_for('static', filename='images/menu.webp') }}");
+        background-size: cover;
+        background-position: center;
+        min-height: 100vh;
+        padding: 2rem;
+    }
+    .menu-title {
+        color: white;
+        font-size: 3rem;
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    .menu-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        flex-wrap: wrap;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    .menu-button {
+        width: 200px;
+        height: 200px;
+        border-radius: 10px;
+        border: 2px solid #6c3302;
+        background-color: rgba(0, 0, 0, 0.8);
+        color: white;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .menu-button:hover {
+        background-color: rgba(108, 51, 2, 0.8);
+    }
+    .menu-button.active {
+        background-color: rgba(108, 51, 2, 0.8);
+    }
+    .menu-button img {
+        width: 60px;
+        height: 60px;
+        margin-bottom: 1rem;
+    }
+    .selected-category {
+        color: #ffd700;
+        font-size: 2.5rem;
+        text-align: center;
+        margin-top: 2rem;
+    }
+    .products-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: rgba(255, 255, 255, 0.9);
+        border-radius: 10px;
+    }
+    .product-item {
+        transition: transform 0.3s ease;
+    }
+    .product-item:hover {
+        transform: translateY(-5px);
+    }
+    .placeholder-text {
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        color: #6c757d;
+        background-color: #e9ecef;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="menu-container">
+    <h1 class="menu-title">Menu</h1>
+    <div class="menu-buttons">
+        <div class="menu-button active" onclick="selectCategory('Burrito')">
+            <img src="{{ url_for('static', filename='images/burrito.webp') }}" alt="Burrito">
+            <span>Burrito</span>
+        </div>
+        <div class="menu-button" onclick="selectCategory('Taco')">
+            <img src="{{ url_for('static', filename='images/taco.webp') }}" alt="Taco">
+            <span>Taco</span>
+        </div>
+        <div class="menu-button" onclick="selectCategory('Nachos')">
+            <img src="{{ url_for('static', filename='images/nachos.webp') }}" alt="Nachos">
+            <span>Nachos</span>
+        </div>
+        <div class="menu-button" onclick="selectCategory('Sałatki')">
+            <img src="{{ url_for('static', filename='images/salad.webp') }}" alt="Sałatki">
+            <span>Sałatki</span>
+        </div>
+        <div class="menu-button" onclick="selectCategory('Dodatki')">
+            <img src="{{ url_for('static', filename='images/additives.webp') }}" alt="Dodatki">
+            <span>Dodatki</span>
+        </div>
+    </div>
+    <h2 class="selected-category" id="selectedCategory">Burrito</h2>
+    
+    <div class="products-container mt-4">
+        <div class="row row-cols-1 row-cols-md-3 g-4" id="productsGrid">
+            {% for item in menu_items %}
+            <div class="col product-item" data-category="{{ item.category }}">
+                <div class="card h-100">
+                    <div class="card-img-top text-center p-3" style="height: 200px; background-color: #f8f9fa;">
+                        <div class="placeholder-text">
+                            {{ item.name }}
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ item.name }}</h5>
+                        <p class="card-text">{{ item.ingredients }}</p>
+                        <p class="card-text"><strong>Cena: {{ "%.2f"|format(item.price) }} zł</strong></p>
+                        <button class="btn btn-primary" onclick='addToBasket({{ item|tojson|safe }})'>
+                            Dodaj
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function selectCategory(category) {
+        document.querySelectorAll('.menu-button').forEach(button => {
+            button.classList.remove('active');
+        });
+        
+        const selectedButton = Array.from(document.querySelectorAll('.menu-button'))
+            .find(button => button.textContent.trim() === category);
+        if (selectedButton) {
+            selectedButton.classList.add('active');
+        }
+        
+        document.getElementById('selectedCategory').textContent = category;
+        
+        const products = document.querySelectorAll('.product-item');
+        products.forEach(product => {
+            if (product.dataset.category === category) {
+                product.style.display = 'block';
+            } else {
+                product.style.display = 'none';
+            }
+        });
+    }
+
+    function addToBasket(item) {
+        let basket = JSON.parse(localStorage.getItem('basket')) || [];
+        // Add items array if it doesn't exist
+        if (!item.items) {
+            item.items = [item.name];
+        }
+        basket.push(item);
+        localStorage.setItem('basket', JSON.stringify(basket));
+        updateBasketCount();
+    }
+
+    // Initialize with first category selected and update basket count
+    document.addEventListener('DOMContentLoaded', function() {
+        selectCategory('Burrito');
+        updateBasketCount();
+    });
+</script>
+{% endblock %}

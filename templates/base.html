@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Flask App{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">My App</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/menu">Menu</a>
+                    </li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/basket" id="basketBtn">
+                            <i class="bi bi-cart"></i> Basket (<span id="basketCount">0</span>)
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    {% block content %}{% endblock %}
+
+    <!-- Persistent Chat Interface -->
+    <div class="chat-container position-fixed bottom-0 end-0 mb-4 me-4" style="width: 300px; z-index: 1000;">
+        <div class="card">
+            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Shopping Assistant</h5>
+                <div>
+                    <button class="btn btn-sm btn-link text-white" onclick="clearChat()">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                    <button class="btn btn-sm btn-link text-white" onclick="toggleChat()">
+                        <i class="bi bi-chevron-down" id="chatToggleIcon"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="chatBody" style="display: none;">
+                <div class="card-body" style="height: 300px; overflow-y: auto;" id="chatMessages">
+                    <!-- Chat messages will appear here -->
+                </div>
+                <div class="card-footer">
+                    <div class="input-group">
+                        <input type="text" class="form-control" id="userInput" placeholder="Type your message...">
+                        <button class="btn btn-primary" onclick="sendMessage()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Chat persistence
+        document.addEventListener('DOMContentLoaded', function() {
+            // Clear chat history on page load
+            localStorage.removeItem('chatHistory');
+            loadChatHistory();
+            updateBasketCount();
+            
+            // Restore chat state
+            const chatState = localStorage.getItem('chatState') || 'closed';
+            if (chatState === 'open') {
+                document.getElementById('chatBody').style.display = 'block';
+                document.getElementById('chatToggleIcon').classList.replace('bi-chevron-down', 'bi-chevron-up');
+            }
+        });
+
+        function toggleChat() {
+            const chatBody = document.getElementById('chatBody');
+            const icon = document.getElementById('chatToggleIcon');
+            if (chatBody.style.display === 'none') {
+                chatBody.style.display = 'block';
+                icon.classList.replace('bi-chevron-down', 'bi-chevron-up');
+                localStorage.setItem('chatState', 'open');
+            } else {
+                chatBody.style.display = 'none';
+                icon.classList.replace('bi-chevron-up', 'bi-chevron-down');
+                localStorage.setItem('chatState', 'closed');
+            }
+        }
+
+        function loadChatHistory() {
+            const chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+            chatHistory.forEach(msg => addMessageToChat(msg.role, msg.content, false));
+        }
+
+        function addMessageToChat(role, content, save = true) {
+            const chatMessages = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${role} mb-2`;
+            messageDiv.innerHTML = `
+                <div class="p-2 rounded ${role === 'user' ? 'bg-primary text-white ms-auto' : 'bg-light'}" 
+                     style="max-width: 80%; ${role === 'user' ? 'float: right;' : 'float: left;'}">
+                    ${content}
+                </div>
+                <div style="clear: both;"></div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            if (save) {
+                const chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+                chatHistory.push({ role, content });
+                localStorage.setItem('chatHistory', JSON.stringify(chatHistory));
+            }
+        }
+
+        // Basket management functions
+        function updateBasketCount() {
+            const basket = JSON.parse(localStorage.getItem('basket')) || [];
+            const basketCount = document.getElementById('basketCount');
+            if (basketCount) {
+                basketCount.textContent = basket.length;
+            }
+        }
+
+        function addToBasket(item) {
+            let basket = JSON.parse(localStorage.getItem('basket')) || [];
+            basket.push(item);
+            localStorage.setItem('basket', JSON.stringify(basket));
+            updateBasketCount();
+        }
+
+        // Chat functionality
+        async function sendMessage() {
+            const userInput = document.getElementById('userInput');
+            const message = userInput.value.trim();
+            
+            if (!message) return;
+            
+            // Add user message to chat
+            addMessageToChat('user', message);
+            userInput.value = '';
+
+            try {
+                // Get conversation history
+                const chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+                
+                // Debug log
+                console.log('Sending chat history:', chatHistory);
+
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        message: message,
+                        history: chatHistory
+                    })
+                });
+
+                const data = await response.json();
+                
+                // Debug log
+                console.log('Received response:', data);
+                
+                // Add AI response to chat
+                addMessageToChat('assistant', data.response);
+
+                // Update chat history in localStorage with the new history from server
+                localStorage.setItem('chatHistory', JSON.stringify(data.history));
+
+                // Handle any actions returned by the AI
+                if (data.action) {
+                    handleChatAction(data.action);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                addMessageToChat('assistant', 'Sorry, there was an error processing your request.');
+            }
+        }
+
+        function handleChatAction(action) {
+            switch (action.type) {
+                case 'add_to_basket':
+                    addToBasket(action.product);
+                    break;
+                case 'remove_from_basket':
+                    let basket = JSON.parse(localStorage.getItem('basket')) || [];
+                    basket.splice(action.index, 1);
+                    localStorage.setItem('basket', JSON.stringify(basket));
+                    updateBasketCount();
+                    // If we're on the basket page, refresh the display
+                    if (window.location.pathname === '/basket') {
+                        displayBasketItems();
+                    }
+                    break;
+            }
+        }
+
+        // Add event listener for Enter key in chat input
+        document.getElementById('userInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        // Add clear chat function
+        function clearChat() {
+            localStorage.removeItem('chatHistory');
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+        }
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

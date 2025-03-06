@@ -1,0 +1,8 @@
+# ignore directory wygenerowane
+wygenerowane/
+__pycache__/
+static/
+catalogs_search_linux/
+
+*.env
+*.txt
