@@ -1,19 +1,23 @@
 LOGISTIC_APPLICATION/
 ├── app/
 │   ├── __init__.py
-│   ├── .env
 │   ├── auth.py
 │   ├── index.py
-│   └── models.py
+│   ├── models.py
+│   └── sql_server_connetction.py
 ├── static/
 │   ├── css/
 │   │   └── style.css
+│   └── images/
+|
 ├── templates/
-│   ├── app_structure.md
 │   ├── base.html
+│   ├── basket.html
 │   ├── index.html
-│   └── login.html
-├── .gitignore
-├── README.md
+│   ├── login.html
+│   └── menu.html
 ├── .env
+├── .gitignore
+├── app_structure.md
+├── README.md
 └── run.py
