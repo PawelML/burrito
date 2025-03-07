@@ -147,6 +147,12 @@
             
             if (!message) return;
             
+            // Add user message to chat immediately
+            addMessageToChat('user', message);
+            
+            // Clear input field after sending
+            userInput.value = '';
+            
             // Debug logging
             const currentBasket = localStorage.getItem('basket');
             console.log('Raw basket from localStorage:', currentBasket);
