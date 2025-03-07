@@ -217,7 +217,6 @@ def chat():
             print("Failed to parse action JSON")
 
     # Update conversation history with string content, not the object
-    conversation_history.append({"role": "user", "content": user_message})
     conversation_history.append({"role": "assistant", "content": ai_message_content})
 
     print("\nUpdated conversation history length:", len(conversation_history))

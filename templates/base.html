@@ -158,8 +158,9 @@
             console.log('Raw basket from localStorage:', currentBasket);
             
             try {
-                // Get conversation history
+                // Get conversation history but EXCLUDE the message we just added
                 const chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
+                const historyCopy = chatHistory.slice(0, -1); // Remove the last message we just added
                 
                 // Get current basket data and encode it properly
                 const basketData = currentBasket || '[]';
@@ -167,8 +168,8 @@
                 
                 const requestBody = { 
                     message: message,
-                    history: chatHistory,
-                    basket: basketData  // Send the raw basket data, don't encode it here
+                    history: historyCopy, // Send history without the current message
+                    basket: basketData
                 };
                 console.log('Full request body:', requestBody);
 
