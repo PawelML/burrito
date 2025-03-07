@@ -147,26 +147,31 @@
             
             if (!message) return;
             
-            // Add user message to chat
-            addMessageToChat('user', message);
-            userInput.value = '';
-
+            // Debug logging
+            const currentBasket = localStorage.getItem('basket');
+            console.log('Raw basket from localStorage:', currentBasket);
+            
             try {
                 // Get conversation history
                 const chatHistory = JSON.parse(localStorage.getItem('chatHistory')) || [];
                 
-                // Debug log
-                console.log('Sending chat history:', chatHistory);
+                // Get current basket data and encode it properly
+                const basketData = currentBasket || '[]';
+                console.log('Basket data being sent:', basketData);
+                
+                const requestBody = { 
+                    message: message,
+                    history: chatHistory,
+                    basket: basketData  // Send the raw basket data, don't encode it here
+                };
+                console.log('Full request body:', requestBody);
 
                 const response = await fetch('/api/chat', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({ 
-                        message: message,
-                        history: chatHistory
-                    })
+                    body: JSON.stringify(requestBody)
                 });
 
                 const data = await response.json();
