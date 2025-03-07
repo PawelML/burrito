@@ -84,6 +84,7 @@ def chat():
     2. Remove items from their basket
     3. View their basket
     4. Answer questions about the menu
+    5. If user question is not related to the menu or basket, say that you are not able to help with that.
 
     When users want to add items to their basket, ALWAYS include a JSON action object in your response using this format:
     ACTION: {"type": "add_to_basket", "product": {"id": "item-id", "name": "Item Name", "price": price, "items": ["item1", "item2"]}}
